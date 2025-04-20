@@ -71,3 +71,54 @@ def mostrar_total_por_mes():
     total = resultado[0] if resultado[0] is not None else 0
 
     print(f"\nEl total gastado en {mes}/{año}: ${total:.2f}")
+
+
+def mostrar_total_por_tipo_mes():
+
+    conexion = conectar_db()
+    cursor = conexion.cursor()
+
+    año = input("Ingrese el año que quiere saber los gastos (ejemplo : 2025) : ")
+    mes = input("Ingrese el mes que quiere saber los gastos (ejemplo : 04) : ")
+
+    fecha_prefijo = f"{año}-{mes}"
+
+    cursor.execute("select tipo, sum(monto) from gastos where fecha like ? group by tipo", (f"{fecha_prefijo}%",))
+
+    resultados = cursor.fetchall()
+
+    if resultados : 
+        print(f"\nEl total gastado en {mes}/{año}:")
+        for tipo, monto in resultados: 
+             print(f"{tipo} : ${monto:.2f}")
+    else : 
+        print("No hay gastos cargados.")
+
+    cerrar_conexion(conexion)
+
+
+def eliminar_gasto():
+
+    conexion = conectar_db()
+    cursor = conexion.cursor()
+
+    print("\nA continuacion visualizara todos sus gastos : ")
+    mostrar_gastos()
+
+    gasto_id = int(input("Ingrese el ID del gasto que desea eliminar : "))
+
+    confirmacion = input(f"Esta seguro que va a eliminar el gasto ID : {gasto_id}? (S/N) : ").upper()
+
+    if confirmacion == 'S':
+        cursor.execute("delete from gastos where id = ?",(gasto_id,))
+        conexion.commit()
+        print("Gasto eliminado! La lista quedo actualizada : ")
+        mostrar_gastos()
+
+    elif confirmacion == 'N':
+        print("El gasto no fue eliminado!")
+
+    else : 
+        print("El gasto no fue encontrado.")    
+    
+    cerrar_conexion(conexion)

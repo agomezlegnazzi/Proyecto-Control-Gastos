@@ -1,4 +1,4 @@
-from gastos import agregar_gasto, mostrar_gastos,mostrar_total_gastado,mostrar_total_por_mes
+from gastos import agregar_gasto, mostrar_gastos,mostrar_total_gastado,mostrar_total_por_mes, mostrar_total_por_tipo_mes, eliminar_gasto
 
 def main(): 
 
@@ -8,7 +8,9 @@ def main():
         print("\n2. Mostrar gastos")
         print("\n3. Mostrar total gastado (Historico)")
         print("\n4. Mostrar total gastado por mes.")
-        print("\n5 Salir")
+        print("\n5. Mostrar total gastado por tipo (mensual).")
+        print("\n6. Eliminar un gasto.")
+        print("\n7 Salir")
         opcion = input("\nElija la opcion : ")
 
         if opcion == '1':
@@ -23,6 +25,10 @@ def main():
         elif opcion == '4':
             mostrar_total_por_mes()
         elif opcion == '5':
+            mostrar_total_por_tipo_mes()
+        elif opcion == '6':
+            eliminar_gasto()
+        elif opcion == '7':
             break
         else:
             print("Opcion no valida, intente de nuevo")
