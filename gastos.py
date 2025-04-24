@@ -122,3 +122,47 @@ def eliminar_gasto():
         print("El gasto no fue encontrado.")    
     
     cerrar_conexion(conexion)
+
+def editar_gasto():
+
+    conexion = conectar_db()
+    cursor = conexion.cursor()
+
+    print("\nA continuacion visualizara todos sus gastos : ")
+    mostrar_gastos()
+
+    gasto_id = int(input("Ingrese el ID del gasto a editar : "))
+
+    editar = input("Ingrese la categoria a editar (TIPO : 'T' / MONTO : 'M' / DESCRIPCION : 'D' / CANCELAR : 'C') : ").upper()
+
+    while True : 
+        if editar == 'T':
+            nuevo_tipo = input("Ingrese el nuevo tipo : ").capitalize()
+            cursor.execute(f"update gastos set tipo = ? where id = ?",(nuevo_tipo,gasto_id))
+            conexion.commit()
+            print("Gasto editado!")
+            break
+        
+        elif editar == 'M':
+            nuevo_monto = float(input("Ingrese el nuevo tipo : "))
+            cursor.execute(f"update gastos set monto = ? where id = ?",(nuevo_monto,gasto_id))
+            conexion.commit()
+            print("Gasto editado!")
+            break
+        
+        elif editar == 'D':
+            nueva_descripcion = input("Ingrese la nueva descripcion : ").capitalize()
+            cursor.execute(f"update gastos set descripcion = ? where id = ?",(nueva_descripcion,gasto_id))
+            conexion.commit()
+            print("Gasto editado!")
+            break
+
+        elif editar == 'C':
+            print("Edicion cancelada!")
+            break
+        
+        else:
+            print("Gasto no encontrado!")
+            break
+        
+        cerrar_conexion(conexion)

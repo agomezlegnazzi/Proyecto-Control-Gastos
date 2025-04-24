@@ -1,64 +1,110 @@
 import tkinter as tk
 from tkinter import messagebox
-from gastos import agregar_gasto, mostrar_gastos, eliminar_gasto, mostrar_total_por_mes, mostrar_total_por_tipo_mes,eliminar_gasto
+from datetime import date
+from db import conectar_db, cerrar_conexion
 
+# Función para agregar gasto
+def agregar_gasto(tipo_de_gasto, monto_del_gasto, descripcion_de_gasto):
+    fecha = date.today().isoformat()
+    gasto = {
+        'TIPO': tipo_de_gasto,
+        'FECHA': fecha,
+        'MONTO': monto_del_gasto,
+        'DESCRIPCION': descripcion_de_gasto
+    }
 
-class GastosApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Control de Gastos")
-        self.root.geometry("400x400")
-        
-        # Títulos y botones
-        self.title_label = tk.Label(self.root, text="Control de Gastos", font=("Arial", 16))
-        self.title_label.pack(pady=20)
-        
-        self.btn_agregar = tk.Button(self.root, text="Agregar Gasto", command=self.agregar)
-        self.btn_agregar.pack(pady=5)
+    # CONEXION A BD
+    conexion = conectar_db()
+    cursor = conexion.cursor()
 
-        self.btn_mostrar = tk.Button(self.root, text="Mostrar Gastos", command=self.mostrar)
-        self.btn_mostrar.pack(pady=5)
+    # INSERT DE GASTO A LA TABLA 'GASTOS'
+    cursor.execute("""
+        INSERT INTO gastos (tipo, fecha, monto, descripcion)
+        VALUES (?, ?, ?, ?)
+    """, (gasto['TIPO'], gasto['FECHA'], gasto['MONTO'], gasto['DESCRIPCION']))
 
-        self.btn_eliminar = tk.Button(self.root, text="Eliminar Gasto", command=self.eliminar)
-        self.btn_eliminar.pack(pady=5)
+    conexion.commit()
+    conexion.close()
 
-        self.btn_total_mes = tk.Button(self.root, text="Total por Mes", command=self.total_mes)
-        self.btn_total_mes.pack(pady=5)
+    print("El gasto fue registrado con éxito!")
 
-        self.btn_total_tipo = tk.Button(self.root, text="Total por Tipo", command=self.total_tipo)
-        self.btn_total_tipo.pack(pady=5)
+# Función para mostrar los gastos
+def mostrar_gastos():
+    conexion = conectar_db()
+    cursor = conexion.cursor()
+    cursor.execute("Select * from GASTOS")
+    gastos = cursor.fetchall()
 
-    def agregar(self):
-        tipo = self.ask_input("Tipo de Gasto")
-        monto = self.ask_input("Monto del Gasto")
-        descripcion = self.ask_input("Descripción del Gasto")
+    # Crear una nueva ventana para mostrar los gastos
+    mostrar_window = tk.Toplevel()
+    mostrar_window.title("Mostrar Gastos")
 
-        agregar_gasto(tipo, monto, descripcion)
-        messagebox.showinfo("Éxito", "Gasto agregado correctamente!")
+    if gastos:
+        for gasto in gastos:
+            gasto_text = f"ID: {gasto[0]}, TIPO: {gasto[1]}, FECHA: {gasto[2]}, MONTO: ${gasto[3]}, DESCRIPCION: {gasto[4]}"
+            tk.Label(mostrar_window, text=gasto_text).pack(pady=5)
+    else:
+        tk.Label(mostrar_window, text="No hay gastos registrados aún.").pack(pady=5)
 
-    def mostrar(self):
-        mostrar_gastos()
-        
-    def eliminar(self):
-        gasto_id = self.ask_input("ID del Gasto a Eliminar")
-        eliminar_gasto(gasto_id)
-        
-    def total_mes(self):
-        año = self.ask_input("Año")
-        mes = self.ask_input("Mes")
-        mostrar_total_por_mes(año, mes)
-        
-    def total_tipo(self):
-        año = self.ask_input("Año")
-        mes = self.ask_input("Mes")
-        mostrar_total_por_tipo(año, mes)
+    cerrar_conexion(conexion)
 
-    def ask_input(self, label_text):
-        input_value = tk.simpledialog.askstring("Input", label_text)
-        return input_value
+# Función para crear la ventana de agregar gasto
+def agregar_gasto_ventana():
+    def submit_gasto():
+        tipo = tipo_entry.get()
+        monto = monto_entry.get()
+        descripcion = descripcion_entry.get()
+
+        # Validación simple
+        if tipo and monto and descripcion:
+            try:
+                monto = float(monto)
+                agregar_gasto(tipo, monto, descripcion)
+                messagebox.showinfo("Éxito", "Gasto registrado con éxito.")
+                agregar_gasto_window.destroy()  # Cerrar la ventana de agregar gasto
+            except ValueError:
+                messagebox.showerror("Error", "Por favor ingrese un monto válido.")
+        else:
+            messagebox.showerror("Error", "Todos los campos son obligatorios.")
+
+    agregar_gasto_window = tk.Toplevel()
+    agregar_gasto_window.title("Agregar Gasto")
+
+    # Campos de entrada
+    tk.Label(agregar_gasto_window, text="Tipo de Gasto:").pack()
+    tipo_entry = tk.Entry(agregar_gasto_window)
+    tipo_entry.pack()
+
+    tk.Label(agregar_gasto_window, text="Monto:").pack()
+    monto_entry = tk.Entry(agregar_gasto_window)
+    monto_entry.pack()
+
+    tk.Label(agregar_gasto_window, text="Descripción:").pack()
+    descripcion_entry = tk.Entry(agregar_gasto_window)
+    descripcion_entry.pack()
+
+    # Botón para enviar el formulario
+    submit_button = tk.Button(agregar_gasto_window, text="Agregar Gasto", command=submit_gasto)
+    submit_button.pack()
 
 # Crear la ventana principal
-if __name__ == "__main__":
+def main_window():
     root = tk.Tk()
-    app = GastosApp(root)
+    root.title("CONTROL DE GASTOS")
+
+    # Título de la ventana
+    title_label = tk.Label(root, text="CONTROL DE GASTOS", font=("Helvetica", 16, "bold"))
+    title_label.pack(pady=20)
+
+    # Botón para agregar gasto
+    agregar_button = tk.Button(root, text="Agregar Gasto", command=agregar_gasto_ventana)
+    agregar_button.pack(pady=10)
+
+    # Botón para mostrar los gastos
+    mostrar_button = tk.Button(root, text="Mostrar Gastos", command=mostrar_gastos)
+    mostrar_button.pack(pady=10)
+
     root.mainloop()
+
+if __name__ == "__main__":
+    main_window()
